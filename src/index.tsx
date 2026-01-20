@@ -201,16 +201,21 @@ app.get('/', (c) => {
             75% { transform: translateX(10px); }
           }
           
-          .month-card {
+          .day-card {
             background: rgba(31, 41, 55, 0.8);
             border: 2px solid #6b7280;
             transition: all 0.3s ease;
           }
           
-          .month-card:hover {
+          .day-card:hover {
             border-color: #fbbf24;
             transform: translateY(-2px);
             box-shadow: 0 4px 20px rgba(251, 191, 36, 0.3);
+          }
+          
+          .day-card.today {
+            border: 3px solid #fbbf24;
+            background: rgba(251, 191, 36, 0.1);
           }
           
           .category-checkbox {
@@ -362,20 +367,34 @@ app.get('/', (c) => {
             }
           }
           
-          // カレンダー生成
+          // カレンダー生成（日別表示）
           function generateCalendar() {
             const calendar = document.getElementById('calendar');
             calendar.innerHTML = '';
             
-            // 今月から12月までのみ表示
-            for (let month = currentMonth; month <= 12; month++) {
-              const monthCard = document.createElement('div');
-              monthCard.className = 'month-card rounded-lg p-4';
+            // 今日から年末までの日付を生成
+            const startDate = new Date(currentYear, currentMonth - 1, currentDay);
+            const endDate = new Date(currentYear, 11, 31); // 12月31日
+            
+            const currentDate = new Date(startDate);
+            
+            while (currentDate <= endDate) {
+              const year = currentDate.getFullYear();
+              const month = currentDate.getMonth() + 1;
+              const day = currentDate.getDate();
               
-              const monthTitle = document.createElement('h3');
-              monthTitle.className = 'text-xl font-bold text-yellow-400 mb-4 text-center';
-              monthTitle.textContent = month + '月';
-              monthCard.appendChild(monthTitle);
+              const dayCard = document.createElement('div');
+              dayCard.className = 'day-card rounded-lg p-4';
+              
+              // 今日の日付には特別なスタイル
+              if (year === currentYear && month === currentMonth && day === currentDay) {
+                dayCard.classList.add('today');
+              }
+              
+              const dayTitle = document.createElement('h3');
+              dayTitle.className = 'text-lg font-bold text-yellow-400 mb-3 text-center';
+              dayTitle.textContent = month + '月' + day + '日';
+              dayCard.appendChild(dayTitle);
               
               const categories = [
                 'グノーブル国語',
@@ -390,7 +409,7 @@ app.get('/', (c) => {
               
               categories.forEach(category => {
                 const categoryDiv = document.createElement('div');
-                categoryDiv.className = 'mb-3';
+                categoryDiv.className = 'mb-2';
                 
                 const labelDiv = document.createElement('div');
                 labelDiv.className = 'flex items-center gap-2 mb-1';
@@ -398,12 +417,14 @@ app.get('/', (c) => {
                 const checkbox = document.createElement('input');
                 checkbox.type = 'checkbox';
                 checkbox.className = 'category-checkbox';
+                checkbox.dataset.year = year;
                 checkbox.dataset.month = month;
+                checkbox.dataset.day = day;
                 checkbox.dataset.category = category;
-                checkbox.onchange = () => handleCheckboxChange(month, category, checkbox.checked);
+                checkbox.onchange = () => handleCheckboxChange(year, month, day, category, checkbox.checked);
                 
                 const label = document.createElement('label');
-                label.className = 'text-white text-sm font-semibold';
+                label.className = 'text-white text-xs font-semibold';
                 label.textContent = category;
                 
                 labelDiv.appendChild(checkbox);
@@ -412,31 +433,36 @@ app.get('/', (c) => {
                 const memoInput = document.createElement('input');
                 memoInput.type = 'text';
                 memoInput.className = 'memo-input';
-                memoInput.placeholder = 'メモを入力...';
+                memoInput.placeholder = 'メモ...';
+                memoInput.dataset.year = year;
                 memoInput.dataset.month = month;
+                memoInput.dataset.day = day;
                 memoInput.dataset.category = category;
                 
                 categoryDiv.appendChild(labelDiv);
                 categoryDiv.appendChild(memoInput);
-                monthCard.appendChild(categoryDiv);
+                dayCard.appendChild(categoryDiv);
               });
               
-              calendar.appendChild(monthCard);
+              calendar.appendChild(dayCard);
+              
+              // 次の日へ
+              currentDate.setDate(currentDate.getDate() + 1);
             }
           }
           
           // チェックボックス変更処理
-          async function handleCheckboxChange(month, category, checked) {
+          async function handleCheckboxChange(year, month, day, category, checked) {
             if (!checked) return;
             
-            const memoInput = document.querySelector(\`input.memo-input[data-month="\${month}"][data-category="\${category}"]\`);
+            const memoInput = document.querySelector(\`input.memo-input[data-year="\${year}"][data-month="\${month}"][data-day="\${day}"][data-category="\${category}"]\`);
             const memo = memoInput ? memoInput.value : '';
             
             try {
               const response = await axios.post(API_BASE + '/api/records', {
-                year: currentYear,
+                year: year,
                 month: month,
-                day: currentDay,
+                day: day,
                 category: category,
                 memo: memo
               });
@@ -446,10 +472,10 @@ app.get('/', (c) => {
                 await loadParameters();
                 
                 // 成功メッセージ
-                alert(\`\${category}を記録しました！\\nパラメーターが上昇しました！\`);
+                alert(\`\${month}月\${day}日の\${category}を記録しました！\\nパラメーターが上昇しました！\`);
                 
                 // チェックボックスを無効化
-                const checkbox = document.querySelector(\`input.category-checkbox[data-month="\${month}"][data-category="\${category}"]\`);
+                const checkbox = document.querySelector(\`input.category-checkbox[data-year="\${year}"][data-month="\${month}"][data-day="\${day}"][data-category="\${category}"]\`);
                 if (checkbox) {
                   checkbox.disabled = true;
                 }
