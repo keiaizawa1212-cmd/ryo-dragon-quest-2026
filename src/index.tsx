@@ -302,201 +302,412 @@ app.get('/', (c) => {
         <script src="https://cdn.tailwindcss.com"></script>
         <link href="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free@6.4.0/css/all.min.css" rel="stylesheet">
         <style>
-          @import url('https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap');
+          @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;700;900&display=swap');
+          
+          * {
+            font-family: 'Noto Sans JP', sans-serif;
+          }
           
           body {
-            background: linear-gradient(135deg, #1e3a8a 0%, #312e81 50%, #1e1b4b 100%);
+            background: linear-gradient(135deg, #0f172a 0%, #1e293b 25%, #334155 50%, #1e293b 75%, #0f172a 100%);
+            background-size: 400% 400%;
+            animation: gradientShift 15s ease infinite;
             min-height: 100vh;
+            position: relative;
+          }
+          
+          body::before {
+            content: '';
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: 
+              radial-gradient(circle at 20% 50%, rgba(59, 130, 246, 0.1) 0%, transparent 50%),
+              radial-gradient(circle at 80% 80%, rgba(168, 85, 247, 0.1) 0%, transparent 50%);
+            pointer-events: none;
+            z-index: 0;
+          }
+          
+          @keyframes gradientShift {
+            0%, 100% { background-position: 0% 50%; }
+            50% { background-position: 100% 50%; }
+          }
+          
+          .max-w-7xl {
+            position: relative;
+            z-index: 1;
           }
           
           .dq-title {
-            font-family: 'Press Start 2P', cursive;
-            text-shadow: 4px 4px 0px #000, -1px -1px 0px #fff;
-            color: #fbbf24;
-            letter-spacing: 2px;
+            font-weight: 900;
+            background: linear-gradient(135deg, #fbbf24 0%, #f59e0b 25%, #fbbf24 50%, #f59e0b 75%, #fbbf24 100%);
+            background-size: 200% auto;
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            animation: shimmer 3s linear infinite;
+            filter: drop-shadow(0 4px 8px rgba(251, 191, 36, 0.5)) 
+                    drop-shadow(0 0 20px rgba(251, 191, 36, 0.3));
+            letter-spacing: 3px;
+          }
+          
+          @keyframes shimmer {
+            to { background-position: 200% center; }
           }
           
           .dq-box {
-            background: linear-gradient(to bottom, #1f2937 0%, #111827 100%);
-            border: 4px solid #fbbf24;
-            box-shadow: 0 0 20px rgba(251, 191, 36, 0.5), inset 0 0 20px rgba(0, 0, 0, 0.5);
+            background: linear-gradient(135deg, 
+              rgba(30, 41, 59, 0.95) 0%, 
+              rgba(15, 23, 42, 0.95) 50%, 
+              rgba(30, 41, 59, 0.95) 100%);
+            border: 3px solid;
+            border-image: linear-gradient(135deg, #fbbf24, #f59e0b, #fbbf24) 1;
+            border-radius: 16px;
+            box-shadow: 
+              0 10px 30px rgba(0, 0, 0, 0.5),
+              0 0 40px rgba(251, 191, 36, 0.2),
+              inset 0 1px 0 rgba(255, 255, 255, 0.1),
+              inset 0 -1px 0 rgba(0, 0, 0, 0.5);
+            backdrop-filter: blur(10px);
+            position: relative;
+            overflow: hidden;
+          }
+          
+          .dq-box::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, 
+              transparent, 
+              rgba(255, 255, 255, 0.1), 
+              transparent);
+            animation: shine 3s infinite;
+          }
+          
+          @keyframes shine {
+            to { left: 100%; }
           }
           
           .param-bar {
-            background: linear-gradient(to right, #ef4444 0%, #f59e0b 50%, #10b981 100%);
-            height: 24px;
-            border-radius: 4px;
-            box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.3);
-            transition: width 0.5s ease;
+            background: linear-gradient(90deg, 
+              #3b82f6 0%, 
+              #8b5cf6 25%, 
+              #d946ef 50%, 
+              #f59e0b 75%, 
+              #10b981 100%);
+            height: 28px;
+            border-radius: 14px;
+            box-shadow: 
+              inset 0 2px 4px rgba(0, 0, 0, 0.3),
+              0 2px 8px rgba(59, 130, 246, 0.4),
+              0 0 20px rgba(139, 92, 246, 0.3);
+            transition: all 0.8s cubic-bezier(0.4, 0, 0.2, 1);
+            position: relative;
+            overflow: hidden;
+          }
+          
+          .param-bar::after {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 50%;
+            background: linear-gradient(to bottom, 
+              rgba(255, 255, 255, 0.3), 
+              transparent);
+            border-radius: 14px 14px 0 0;
           }
           
           .boss-appear {
-            animation: bossShake 0.5s infinite;
+            animation: bossEntrance 1s ease-out, bossPulse 2s ease-in-out infinite;
           }
           
-          @keyframes bossShake {
-            0%, 100% { transform: translateX(0); }
-            25% { transform: translateX(-10px); }
-            75% { transform: translateX(10px); }
+          @keyframes bossEntrance {
+            0% { 
+              transform: scale(0.5) translateY(-50px); 
+              opacity: 0; 
+            }
+            60% { 
+              transform: scale(1.1) translateY(0); 
+            }
+            100% { 
+              transform: scale(1) translateY(0); 
+              opacity: 1; 
+            }
+          }
+          
+          @keyframes bossPulse {
+            0%, 100% { 
+              transform: scale(1); 
+              box-shadow: 0 0 40px rgba(239, 68, 68, 0.6); 
+            }
+            50% { 
+              transform: scale(1.02); 
+              box-shadow: 0 0 60px rgba(239, 68, 68, 0.9); 
+            }
           }
           
           .day-card {
-            background: rgba(31, 41, 55, 0.8);
-            border: 2px solid #6b7280;
-            transition: all 0.3s ease;
+            background: linear-gradient(135deg, 
+              rgba(51, 65, 85, 0.8) 0%, 
+              rgba(30, 41, 59, 0.8) 100%);
+            border: 2px solid rgba(148, 163, 184, 0.3);
+            border-radius: 12px;
+            transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+            backdrop-filter: blur(8px);
           }
           
           .day-card:hover {
             border-color: #fbbf24;
-            transform: translateY(-2px);
-            box-shadow: 0 4px 20px rgba(251, 191, 36, 0.3);
+            transform: translateY(-4px) scale(1.02);
+            box-shadow: 
+              0 8px 24px rgba(0, 0, 0, 0.4),
+              0 0 30px rgba(251, 191, 36, 0.3);
           }
           
           .day-card.today {
             border: 3px solid #fbbf24;
-            background: rgba(251, 191, 36, 0.1);
+            background: linear-gradient(135deg, 
+              rgba(251, 191, 36, 0.15) 0%, 
+              rgba(245, 158, 11, 0.1) 100%);
+            box-shadow: 
+              0 0 30px rgba(251, 191, 36, 0.4),
+              inset 0 0 20px rgba(251, 191, 36, 0.1);
           }
           
           .category-checkbox {
-            width: 20px;
-            height: 20px;
+            width: 22px;
+            height: 22px;
             cursor: pointer;
+            accent-color: #fbbf24;
+            transform: scale(1);
+            transition: transform 0.2s ease;
+          }
+          
+          .category-checkbox:hover {
+            transform: scale(1.2);
           }
           
           .memo-input {
-            background: rgba(17, 24, 39, 0.8);
-            border: 1px solid #4b5563;
-            color: #f3f4f6;
-            padding: 4px 8px;
-            border-radius: 4px;
+            background: rgba(15, 23, 42, 0.8);
+            border: 2px solid rgba(100, 116, 139, 0.4);
+            color: #f1f5f9;
+            padding: 8px 12px;
+            border-radius: 8px;
             width: 100%;
-            font-size: 12px;
+            font-size: 14px;
+            transition: all 0.3s ease;
           }
           
           .memo-input:focus {
             outline: none;
             border-color: #fbbf24;
+            box-shadow: 0 0 0 3px rgba(251, 191, 36, 0.2);
+            background: rgba(15, 23, 42, 0.95);
           }
           
-          /* ボス図鑑カード */
+          /* ボス図鑑カード - 現代版デザイン */
           .boss-card {
-            background: rgba(31, 41, 55, 0.9);
-            border: 2px solid #4b5563;
-            border-radius: 8px;
-            padding: 12px;
+            background: linear-gradient(135deg, 
+              rgba(51, 65, 85, 0.9) 0%, 
+              rgba(30, 41, 59, 0.9) 100%);
+            border: 2px solid rgba(100, 116, 139, 0.4);
+            border-radius: 12px;
+            padding: 14px;
             text-align: center;
-            transition: all 0.3s ease;
+            transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
             position: relative;
             cursor: pointer;
+            backdrop-filter: blur(8px);
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
           }
           
           .boss-card:hover {
             border-color: #fbbf24;
-            transform: translateY(-2px);
-            box-shadow: 0 4px 12px rgba(251, 191, 36, 0.3);
+            transform: translateY(-6px) scale(1.05);
+            box-shadow: 
+              0 12px 24px rgba(0, 0, 0, 0.4),
+              0 0 40px rgba(251, 191, 36, 0.4);
           }
           
           .boss-card.defeated {
-            background: rgba(34, 197, 94, 0.2);
+            background: linear-gradient(135deg, 
+              rgba(34, 197, 94, 0.25) 0%, 
+              rgba(16, 185, 129, 0.2) 100%);
             border-color: #22c55e;
+            box-shadow: 
+              0 4px 12px rgba(0, 0, 0, 0.3),
+              0 0 20px rgba(34, 197, 94, 0.3);
+          }
+          
+          .boss-card.defeated:hover {
+            box-shadow: 
+              0 12px 24px rgba(0, 0, 0, 0.4),
+              0 0 40px rgba(34, 197, 94, 0.5);
           }
           
           .boss-card.current {
-            background: rgba(239, 68, 68, 0.3);
+            background: linear-gradient(135deg, 
+              rgba(239, 68, 68, 0.35) 0%, 
+              rgba(220, 38, 38, 0.3) 100%);
             border-color: #ef4444;
-            animation: bossGlow 1s ease-in-out infinite;
+            animation: bossCardGlow 2s ease-in-out infinite;
           }
           
-          @keyframes bossGlow {
-            0%, 100% { box-shadow: 0 0 10px rgba(239, 68, 68, 0.5); }
-            50% { box-shadow: 0 0 20px rgba(239, 68, 68, 0.8); }
+          @keyframes bossCardGlow {
+            0%, 100% { 
+              box-shadow: 
+                0 4px 12px rgba(0, 0, 0, 0.3),
+                0 0 30px rgba(239, 68, 68, 0.6); 
+            }
+            50% { 
+              box-shadow: 
+                0 8px 20px rgba(0, 0, 0, 0.4),
+                0 0 50px rgba(239, 68, 68, 0.9); 
+            }
           }
           
           .boss-icon {
-            font-size: 2rem;
-            margin-bottom: 8px;
+            font-size: 2.5rem;
+            margin-bottom: 10px;
+            filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.3));
+            transition: transform 0.3s ease;
+          }
+          
+          .boss-card:hover .boss-icon {
+            transform: scale(1.2) rotate(5deg);
           }
           
           .boss-level {
             font-size: 0.875rem;
-            font-weight: bold;
-            color: #fbbf24;
-            margin-bottom: 4px;
+            font-weight: 700;
+            background: linear-gradient(135deg, #fbbf24, #f59e0b);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            margin-bottom: 6px;
+            filter: drop-shadow(0 1px 2px rgba(0, 0, 0, 0.3));
           }
           
           .boss-name {
-            font-size: 0.75rem;
-            color: #e5e7eb;
-            line-height: 1.2;
+            font-size: 0.8rem;
+            color: #e2e8f0;
+            line-height: 1.3;
+            font-weight: 600;
           }
           
           .defeated-mark {
             position: absolute;
-            top: -8px;
-            right: -8px;
-            background: #22c55e;
+            top: -10px;
+            right: -10px;
+            background: linear-gradient(135deg, #22c55e, #16a34a);
             color: white;
             border-radius: 50%;
-            width: 32px;
-            height: 32px;
+            width: 36px;
+            height: 36px;
             display: flex;
             align-items: center;
             justify-content: center;
-            font-size: 1.2rem;
-            border: 2px solid #fff;
-            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+            font-size: 1.3rem;
+            border: 3px solid #fff;
+            box-shadow: 
+              0 4px 12px rgba(0, 0, 0, 0.4),
+              0 0 20px rgba(34, 197, 94, 0.5);
+            animation: checkmarkPop 0.5s ease-out;
           }
           
-          /* 紙吹雪アニメーション */
+          @keyframes checkmarkPop {
+            0% { transform: scale(0) rotate(-180deg); }
+            60% { transform: scale(1.2) rotate(10deg); }
+            100% { transform: scale(1) rotate(0); }
+          }
+          
+          /* 紙吹雪アニメーション - 現代版 */
           .confetti {
             position: fixed;
-            width: 10px;
-            height: 10px;
+            width: 12px;
+            height: 12px;
             background: #fbbf24;
             position: fixed;
             top: -10px;
             z-index: 9999;
-            animation: confetti-fall 3s linear forwards;
+            animation: confetti-fall 3s ease-in-out forwards;
+            border-radius: 2px;
+            box-shadow: 0 0 10px currentColor;
           }
           
           @keyframes confetti-fall {
-            to {
-              transform: translateY(100vh) rotate(360deg);
-              opacity: 0;
+            0% { 
+              transform: translateY(0) rotateZ(0deg); 
+              opacity: 1; 
+            }
+            100% { 
+              transform: translateY(100vh) rotateZ(720deg); 
+              opacity: 0; 
             }
           }
           
-          /* レベルアップアニメーション */
+          /* レベルアップアニメーション - 現代版 */
           .levelup-overlay {
             position: fixed;
             top: 0;
             left: 0;
             width: 100%;
             height: 100%;
-            background: rgba(0, 0, 0, 0.8);
+            background: radial-gradient(circle, 
+              rgba(0, 0, 0, 0.9) 0%, 
+              rgba(0, 0, 0, 0.95) 100%);
             display: flex;
             justify-content: center;
             align-items: center;
             z-index: 10000;
             animation: fadeIn 0.5s ease-in-out;
+            backdrop-filter: blur(10px);
           }
           
           .levelup-text {
-            font-family: 'Press Start 2P', cursive;
-            font-size: 3rem;
-            color: #fbbf24;
-            text-shadow: 4px 4px 0px #000, -2px -2px 0px #fff;
-            animation: levelupPulse 1s ease-in-out infinite;
+            font-weight: 900;
+            font-size: 4rem;
+            background: linear-gradient(135deg, 
+              #fbbf24 0%, 
+              #f59e0b 25%, 
+              #fbbf24 50%, 
+              #f59e0b 75%, 
+              #fbbf24 100%);
+            background-size: 200% auto;
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            animation: shimmer 1s linear infinite, levelupScale 1.5s ease-in-out infinite;
+            filter: drop-shadow(0 0 30px rgba(251, 191, 36, 0.8)) 
+                    drop-shadow(0 0 60px rgba(245, 158, 11, 0.6));
           }
           
           @keyframes fadeIn {
-            from { opacity: 0; }
-            to { opacity: 1; }
+            from { 
+              opacity: 0; 
+              backdrop-filter: blur(0px); 
+            }
+            to { 
+              opacity: 1; 
+              backdrop-filter: blur(10px); 
+            }
           }
           
-          @keyframes levelupPulse {
-            0%, 100% { transform: scale(1); }
-            50% { transform: scale(1.2); }
+          @keyframes levelupScale {
+            0%, 100% { 
+              transform: scale(1) rotateZ(0deg); 
+            }
+            50% { 
+              transform: scale(1.15) rotateZ(2deg); 
+            }
           }
         </style>
     </head>
