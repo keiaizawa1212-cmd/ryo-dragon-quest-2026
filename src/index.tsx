@@ -47,16 +47,16 @@ app.get('/api/parameters', async (c) => {
     return c.json(newResult);
   }
   
-  // レベル計算（5刻み：5→Lv2, 10→Lv3, 15→Lv4...）
+  // レベル計算（5刻み：5→Lv1, 10→Lv2, 15→Lv3...）
   const defense = result.defense as number;
   const attack = result.attack as number;
   const power = result.power as number;
   const hp = result.hp as number;
   
-  const defenseLevel = Math.floor(defense / 5) + 1;
-  const attackLevel = Math.floor(attack / 5) + 1;
-  const powerLevel = Math.floor(power / 5) + 1;
-  const hpLevel = Math.floor(hp / 5) + 1;
+  const defenseLevel = Math.floor((defense - 1) / 5) + 1;
+  const attackLevel = Math.floor((attack - 1) / 5) + 1;
+  const powerLevel = Math.floor((power - 1) / 5) + 1;
+  const hpLevel = Math.floor((hp - 1) / 5) + 1;
   
   // ボス出現判定（全レベルが一致した時のみ）
   const minLevel = Math.min(defenseLevel, attackLevel, powerLevel, hpLevel);
@@ -149,11 +149,11 @@ app.post('/api/records', async (c) => {
       break;
   }
   
-  // 更新後のレベルを計算（5刻み：5→Lv2, 10→Lv3, 15→Lv4...）
-  const newDefenseLevel = Math.floor(defense / 5) + 1;
-  const newAttackLevel = Math.floor(attack / 5) + 1;
-  const newPowerLevel = Math.floor(power / 5) + 1;
-  const newHpLevel = Math.floor(hp / 5) + 1;
+  // 更新後のレベルを計算（5刻み：5→Lv1, 10→Lv2, 15→Lv3...）
+  const newDefenseLevel = Math.floor((defense - 1) / 5) + 1;
+  const newAttackLevel = Math.floor((attack - 1) / 5) + 1;
+  const newPowerLevel = Math.floor((power - 1) / 5) + 1;
+  const newHpLevel = Math.floor((hp - 1) / 5) + 1;
   
   // レベルアップ判定
   const leveledUp = 
