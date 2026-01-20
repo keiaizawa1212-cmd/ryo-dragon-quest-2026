@@ -10,28 +10,28 @@ const app = new Hono<{ Bindings: Bindings }>()
 // CORS設定
 app.use('/api/*', cors())
 
-// ボスモンスターデータ（レベル1〜20：パラメーター値5=Lv1から5刻みで出現）
+// ボスモンスターデータ（レベル2〜21：パラメーター値5=Lv2から5刻みで出現）
 const BOSS_MONSTERS = [
-  { level: 1, name: '暗記スライム', description: '暗記の基礎を学ぶ最初の敵' },
-  { level: 2, name: '計算ゴブリン', description: '四則演算を操る小鬼' },
-  { level: 3, name: '漢字オーク', description: '漢字の読み書きを妨げる敵' },
-  { level: 4, name: '文章トロール', description: '文章問題を複雑にする巨人' },
-  { level: 5, name: '暗記魔人ザンキング', description: '暗記を嫌う中級魔物' },
-  { level: 6, name: '計算魔王カルクロス', description: '計算問題を乱す魔王' },
-  { level: 7, name: '読解竜ドクカイザー', description: '読解力を奪う竜' },
-  { level: 8, name: '応用魔神オーヨード', description: '応用問題の支配者' },
-  { level: 9, name: '図形騎士ズケイト', description: '図形問題の守護者' },
-  { level: 10, name: '文法将軍ブンポウ', description: '文法の鉄則を操る将軍' },
-  { level: 11, name: '速算妖怪ソクサンマ', description: '速算力を試す妖怪' },
-  { level: 12, name: '記述魔導士キジュツ', description: '記述問題の魔術師' },
-  { level: 13, name: '論理魔神ロンリード', description: '論理的思考を問う魔神' },
-  { level: 14, name: '複合竜コンボドラ', description: '複合問題を繰り出す竜' },
-  { level: 15, name: '時間支配者タイムロード', description: '時間配分を狂わせる支配者' },
-  { level: 16, name: '難問帝王ナンモンテイ', description: '難問を生み出す帝王' },
-  { level: 17, name: '完璧騎士パーフェクト', description: '完璧な解答を求める騎士' },
-  { level: 18, name: '試験神エグザム', description: '試験そのものを司る神' },
-  { level: 19, name: '合格竜パスドラゴン', description: '合格への最後の壁' },
-  { level: 20, name: '大魔王ジュケンデビル', description: '受験を統べる最強の魔王' }
+  { level: 2, name: '暗記スライム', description: '暗記の基礎を学ぶ最初の敵' },
+  { level: 3, name: '計算ゴブリン', description: '四則演算を操る小鬼' },
+  { level: 4, name: '漢字オーク', description: '漢字の読み書きを妨げる敵' },
+  { level: 5, name: '文章トロール', description: '文章問題を複雑にする巨人' },
+  { level: 6, name: '暗記魔人ザンキング', description: '暗記を嫌う中級魔物' },
+  { level: 7, name: '計算魔王カルクロス', description: '計算問題を乱す魔王' },
+  { level: 8, name: '読解竜ドクカイザー', description: '読解力を奪う竜' },
+  { level: 9, name: '応用魔神オーヨード', description: '応用問題の支配者' },
+  { level: 10, name: '図形騎士ズケイト', description: '図形問題の守護者' },
+  { level: 11, name: '文法将軍ブンポウ', description: '文法の鉄則を操る将軍' },
+  { level: 12, name: '速算妖怪ソクサンマ', description: '速算力を試す妖怪' },
+  { level: 13, name: '記述魔導士キジュツ', description: '記述問題の魔術師' },
+  { level: 14, name: '論理魔神ロンリード', description: '論理的思考を問う魔神' },
+  { level: 15, name: '複合竜コンボドラ', description: '複合問題を繰り出す竜' },
+  { level: 16, name: '時間支配者タイムロード', description: '時間配分を狂わせる支配者' },
+  { level: 17, name: '難問帝王ナンモンテイ', description: '難問を生み出す帝王' },
+  { level: 18, name: '完璧騎士パーフェクト', description: '完璧な解答を求める騎士' },
+  { level: 19, name: '試験神エグザム', description: '試験そのものを司る神' },
+  { level: 20, name: '合格竜パスドラゴン', description: '合格への最後の壁' },
+  { level: 21, name: '大魔王ジュケンデビル', description: '受験を統べる最強の魔王' }
 ];
 
 // パラメーター取得API
@@ -47,16 +47,16 @@ app.get('/api/parameters', async (c) => {
     return c.json(newResult);
   }
   
-  // レベル計算（5刻み：5→Lv1, 10→Lv2, 15→Lv3...）
+  // レベル計算（5刻み：5→Lv2, 10→Lv3, 15→Lv4...）
   const defense = result.defense as number;
   const attack = result.attack as number;
   const power = result.power as number;
   const hp = result.hp as number;
   
-  const defenseLevel = Math.floor((defense - 1) / 5) + 1;
-  const attackLevel = Math.floor((attack - 1) / 5) + 1;
-  const powerLevel = Math.floor((power - 1) / 5) + 1;
-  const hpLevel = Math.floor((hp - 1) / 5) + 1;
+  const defenseLevel = Math.floor(defense / 5) + 1;
+  const attackLevel = Math.floor(attack / 5) + 1;
+  const powerLevel = Math.floor(power / 5) + 1;
+  const hpLevel = Math.floor(hp / 5) + 1;
   
   // ボス出現判定（全レベルが一致した時のみ）
   const minLevel = Math.min(defenseLevel, attackLevel, powerLevel, hpLevel);
@@ -149,11 +149,11 @@ app.post('/api/records', async (c) => {
       break;
   }
   
-  // 更新後のレベルを計算（5刻み：5→Lv1, 10→Lv2, 15→Lv3...）
-  const newDefenseLevel = Math.floor((defense - 1) / 5) + 1;
-  const newAttackLevel = Math.floor((attack - 1) / 5) + 1;
-  const newPowerLevel = Math.floor((power - 1) / 5) + 1;
-  const newHpLevel = Math.floor((hp - 1) / 5) + 1;
+  // 更新後のレベルを計算（5刻み：5→Lv2, 10→Lv3, 15→Lv4...）
+  const newDefenseLevel = Math.floor(defense / 5) + 1;
+  const newAttackLevel = Math.floor(attack / 5) + 1;
+  const newPowerLevel = Math.floor(power / 5) + 1;
+  const newHpLevel = Math.floor(hp / 5) + 1;
   
   // レベルアップ判定
   const leveledUp = 
@@ -835,26 +835,26 @@ app.get('/', (c) => {
           
           // ボスモンスターデータ（フロントエンド用 - 現代風アイコン）
           const BOSS_MONSTERS = [
-            { level: 1, name: '暗記スライム', icon: '🟢', description: '暗記の基礎を学ぶ最初の敵' },
-            { level: 2, name: '計算ゴブリン', icon: '👹', description: '四則演算を操る小鬼' },
-            { level: 3, name: '漢字オーク', icon: '🦍', description: '漢字の読み書きを妨げる敵' },
-            { level: 4, name: '文章トロール', icon: '🧟‍♂️', description: '文章問題を複雑にする巨人' },
-            { level: 5, name: '暗記魔人ザンキング', icon: '😈', description: '暗記を嫌う中級魔物' },
-            { level: 6, name: '計算魔王カルクロス', icon: '👿', description: '計算問題を乱す魔王' },
-            { level: 7, name: '読解竜ドクカイザー', icon: '🐲', description: '読解力を奪う竜' },
-            { level: 8, name: '応用魔神オーヨード', icon: '👺', description: '応用問題の支配者' },
-            { level: 9, name: '図形騎士ズケイト', icon: '🛡️', description: '図形問題の守護者' },
-            { level: 10, name: '文法将軍ブンポウ', icon: '⚔️', description: '文法の鉄則を操る将軍' },
-            { level: 11, name: '速算妖怪ソクサンマ', icon: '👻', description: '速算力を試す妖怪' },
-            { level: 12, name: '記述魔導士キジュツ', icon: '🧙‍♂️', description: '記述問題の魔術師' },
-            { level: 13, name: '論理魔神ロンリード', icon: '🧠', description: '論理的思考を問う魔神' },
-            { level: 14, name: '複合竜コンボドラ', icon: '🐉', description: '複合問題を繰り出す竜' },
-            { level: 15, name: '時間支配者タイムロード', icon: '⏱️', description: '時間配分を狂わせる支配者' },
-            { level: 16, name: '難問帝王ナンモンテイ', icon: '👑', description: '難問を生み出す帝王' },
-            { level: 17, name: '完璧騎士パーフェクト', icon: '🏆', description: '完璧な解答を求める騎士' },
-            { level: 18, name: '試験神エグザム', icon: '📜', description: '試験そのものを司る神' },
-            { level: 19, name: '合格竜パスドラゴン', icon: '🎓', description: '合格への最後の壁' },
-            { level: 20, name: '大魔王ジュケンデビル', icon: '💀', description: '受験を統べる最強の魔王' }
+            { level: 2, name: '暗記スライム', icon: '🟢', description: '暗記の基礎を学ぶ最初の敵' },
+            { level: 3, name: '計算ゴブリン', icon: '👹', description: '四則演算を操る小鬼' },
+            { level: 4, name: '漢字オーク', icon: '🦍', description: '漢字の読み書きを妨げる敵' },
+            { level: 5, name: '文章トロール', icon: '🧟‍♂️', description: '文章問題を複雑にする巨人' },
+            { level: 6, name: '暗記魔人ザンキング', icon: '😈', description: '暗記を嫌う中級魔物' },
+            { level: 7, name: '計算魔王カルクロス', icon: '👿', description: '計算問題を乱す魔王' },
+            { level: 8, name: '読解竜ドクカイザー', icon: '🐲', description: '読解力を奪う竜' },
+            { level: 9, name: '応用魔神オーヨード', icon: '👺', description: '応用問題の支配者' },
+            { level: 10, name: '図形騎士ズケイト', icon: '🛡️', description: '図形問題の守護者' },
+            { level: 11, name: '文法将軍ブンポウ', icon: '⚔️', description: '文法の鉄則を操る将軍' },
+            { level: 12, name: '速算妖怪ソクサンマ', icon: '👻', description: '速算力を試す妖怪' },
+            { level: 13, name: '記述魔導士キジュツ', icon: '🧙‍♂️', description: '記述問題の魔術師' },
+            { level: 14, name: '論理魔神ロンリード', icon: '🧠', description: '論理的思考を問う魔神' },
+            { level: 15, name: '複合竜コンボドラ', icon: '🐉', description: '複合問題を繰り出す竜' },
+            { level: 16, name: '時間支配者タイムロード', icon: '⏱️', description: '時間配分を狂わせる支配者' },
+            { level: 17, name: '難問帝王ナンモンテイ', icon: '👑', description: '難問を生み出す帝王' },
+            { level: 18, name: '完璧騎士パーフェクト', icon: '🏆', description: '完璧な解答を求める騎士' },
+            { level: 19, name: '試験神エグザム', icon: '📜', description: '試験そのものを司る神' },
+            { level: 20, name: '合格竜パスドラゴン', icon: '🎓', description: '合格への最後の壁' },
+            { level: 21, name: '大魔王ジュケンデビル', icon: '💀', description: '受験を統べる最強の魔王' }
           ];
           
           // パラメーター読み込み
