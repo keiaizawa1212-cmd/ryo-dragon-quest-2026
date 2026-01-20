@@ -298,15 +298,30 @@ app.get('/', (c) => {
                 </div>
             </div>
             
-            <!-- 今日の日付表示 -->
-            <div class="text-center mb-6">
-                <div class="inline-block bg-yellow-600 text-white px-6 py-3 rounded-lg text-xl font-bold">
-                    今日: <span id="today-date"></span>
+            <!-- 日付ナビゲーション -->
+            <div class="flex items-center justify-center gap-4 mb-6">
+                <button id="prev-day-btn" class="bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 px-6 rounded-lg transition-all transform hover:scale-105 disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none">
+                    <i class="fas fa-chevron-left mr-2"></i>前の日
+                </button>
+                
+                <div class="bg-yellow-600 text-white px-8 py-4 rounded-lg text-2xl font-bold shadow-lg">
+                    <span id="current-date"></span>
                 </div>
+                
+                <button id="next-day-btn" class="bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 px-6 rounded-lg transition-all transform hover:scale-105 disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none">
+                    次の日<i class="fas fa-chevron-right ml-2"></i>
+                </button>
             </div>
             
-            <!-- カレンダー -->
-            <div id="calendar" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+            <!-- 今日に戻るボタン -->
+            <div class="text-center mb-6">
+                <button id="today-btn" class="bg-green-600 hover:bg-green-700 text-white font-bold py-2 px-6 rounded-lg transition-all transform hover:scale-105">
+                    <i class="fas fa-home mr-2"></i>今日に戻る
+                </button>
+            </div>
+            
+            <!-- 単一日のカード表示 -->
+            <div id="day-container" class="max-w-2xl mx-auto">
                 <!-- JavaScriptで動的に生成 -->
             </div>
         </div>
@@ -322,8 +337,10 @@ app.get('/', (c) => {
           const currentMonth = today.getMonth() + 1;
           const currentDay = today.getDate();
           
-          document.getElementById('today-date').textContent = 
-            currentYear + '年' + currentMonth + '月' + currentDay + '日';
+          // 表示中の日付を管理
+          let viewYear = currentYear;
+          let viewMonth = currentMonth;
+          let viewDay = currentDay;
           
           // パラメーター読み込み
           async function loadParameters() {
@@ -367,89 +384,163 @@ app.get('/', (c) => {
             }
           }
           
-          // カレンダー生成（日別表示）
-          function generateCalendar() {
-            const calendar = document.getElementById('calendar');
-            calendar.innerHTML = '';
+          // 日付を更新
+          function updateDateDisplay() {
+            document.getElementById('current-date').textContent = 
+              viewYear + '年' + viewMonth + '月' + viewDay + '日';
             
-            // 今日から年末までの日付を生成
-            const startDate = new Date(currentYear, currentMonth - 1, currentDay);
-            const endDate = new Date(currentYear, 11, 31); // 12月31日
+            // ボタンの有効/無効を設定
+            const viewDate = new Date(viewYear, viewMonth - 1, viewDay);
+            const minDate = new Date(currentYear, 0, 1); // 今年の1月1日
+            const maxDate = new Date(currentYear, 11, 31); // 今年の12月31日
             
-            const currentDate = new Date(startDate);
+            document.getElementById('prev-day-btn').disabled = viewDate <= minDate;
+            document.getElementById('next-day-btn').disabled = viewDate >= maxDate;
             
-            while (currentDate <= endDate) {
-              const year = currentDate.getFullYear();
-              const month = currentDate.getMonth() + 1;
-              const day = currentDate.getDate();
+            // 今日に戻るボタンの表示/非表示
+            const isToday = viewYear === currentYear && viewMonth === currentMonth && viewDay === currentDay;
+            document.getElementById('today-btn').style.display = isToday ? 'none' : 'inline-block';
+          }
+          
+          // 単一日のカード生成
+          function generateDayCard() {
+            const container = document.getElementById('day-container');
+            container.innerHTML = '';
+            
+            const dayCard = document.createElement('div');
+            dayCard.className = 'day-card rounded-lg p-6';
+            
+            // 今日の日付には特別なスタイル
+            const isToday = viewYear === currentYear && viewMonth === currentMonth && viewDay === currentDay;
+            if (isToday) {
+              dayCard.classList.add('today');
+            }
+            
+            const dayTitle = document.createElement('h3');
+            dayTitle.className = 'text-2xl font-bold text-yellow-400 mb-6 text-center';
+            dayTitle.textContent = viewMonth + '月' + viewDay + '日の学習記録';
+            dayCard.appendChild(dayTitle);
+            
+            const categories = [
+              'グノーブル国語',
+              'グノーブル算数',
+              '基礎力完成テスト',
+              '四谷大塚漢字',
+              'その他国語',
+              'その他算数',
+              'その他（スーパークエスト）',
+              'その他（自由記述）'
+            ];
+            
+            categories.forEach(category => {
+              const categoryDiv = document.createElement('div');
+              categoryDiv.className = 'mb-4 bg-gray-800 bg-opacity-50 p-4 rounded-lg';
               
-              const dayCard = document.createElement('div');
-              dayCard.className = 'day-card rounded-lg p-4';
+              const labelDiv = document.createElement('div');
+              labelDiv.className = 'flex items-center gap-3 mb-2';
               
-              // 今日の日付には特別なスタイル
-              if (year === currentYear && month === currentMonth && day === currentDay) {
-                dayCard.classList.add('today');
-              }
+              const checkbox = document.createElement('input');
+              checkbox.type = 'checkbox';
+              checkbox.className = 'category-checkbox';
+              checkbox.dataset.year = viewYear;
+              checkbox.dataset.month = viewMonth;
+              checkbox.dataset.day = viewDay;
+              checkbox.dataset.category = category;
+              checkbox.onchange = () => handleCheckboxChange(viewYear, viewMonth, viewDay, category, checkbox.checked);
               
-              const dayTitle = document.createElement('h3');
-              dayTitle.className = 'text-lg font-bold text-yellow-400 mb-3 text-center';
-              dayTitle.textContent = month + '月' + day + '日';
-              dayCard.appendChild(dayTitle);
+              const label = document.createElement('label');
+              label.className = 'text-white text-base font-bold';
+              label.textContent = category;
               
-              const categories = [
-                'グノーブル国語',
-                'グノーブル算数',
-                '基礎力完成テスト',
-                '四谷大塚漢字',
-                'その他国語',
-                'その他算数',
-                'その他（スーパークエスト）',
-                'その他（自由記述）'
-              ];
+              labelDiv.appendChild(checkbox);
+              labelDiv.appendChild(label);
               
-              categories.forEach(category => {
-                const categoryDiv = document.createElement('div');
-                categoryDiv.className = 'mb-2';
-                
-                const labelDiv = document.createElement('div');
-                labelDiv.className = 'flex items-center gap-2 mb-1';
-                
-                const checkbox = document.createElement('input');
-                checkbox.type = 'checkbox';
-                checkbox.className = 'category-checkbox';
-                checkbox.dataset.year = year;
-                checkbox.dataset.month = month;
-                checkbox.dataset.day = day;
-                checkbox.dataset.category = category;
-                checkbox.onchange = () => handleCheckboxChange(year, month, day, category, checkbox.checked);
-                
-                const label = document.createElement('label');
-                label.className = 'text-white text-xs font-semibold';
-                label.textContent = category;
-                
-                labelDiv.appendChild(checkbox);
-                labelDiv.appendChild(label);
-                
-                const memoInput = document.createElement('input');
-                memoInput.type = 'text';
-                memoInput.className = 'memo-input';
-                memoInput.placeholder = 'メモ...';
-                memoInput.dataset.year = year;
-                memoInput.dataset.month = month;
-                memoInput.dataset.day = day;
-                memoInput.dataset.category = category;
-                
-                categoryDiv.appendChild(labelDiv);
-                categoryDiv.appendChild(memoInput);
-                dayCard.appendChild(categoryDiv);
+              const memoInput = document.createElement('input');
+              memoInput.type = 'text';
+              memoInput.className = 'memo-input';
+              memoInput.placeholder = 'メモを入力...';
+              memoInput.dataset.year = viewYear;
+              memoInput.dataset.month = viewMonth;
+              memoInput.dataset.day = viewDay;
+              memoInput.dataset.category = category;
+              
+              categoryDiv.appendChild(labelDiv);
+              categoryDiv.appendChild(memoInput);
+              dayCard.appendChild(categoryDiv);
+            });
+            
+            container.appendChild(dayCard);
+            
+            // 既存の記録を読み込む
+            loadExistingRecords();
+          }
+          
+          // 既存の記録を読み込む
+          async function loadExistingRecords() {
+            try {
+              const response = await axios.get(API_BASE + '/api/records?year=' + viewYear + '&month=' + viewMonth);
+              const records = response.data;
+              
+              records.forEach(record => {
+                if (record.day === viewDay) {
+                  const checkbox = document.querySelector(\`input.category-checkbox[data-year="\${viewYear}"][data-month="\${viewMonth}"][data-day="\${viewDay}"][data-category="\${record.category}"]\`);
+                  const memoInput = document.querySelector(\`input.memo-input[data-year="\${viewYear}"][data-month="\${viewMonth}"][data-day="\${viewDay}"][data-category="\${record.category}"]\`);
+                  
+                  if (checkbox) {
+                    checkbox.checked = true;
+                    checkbox.disabled = true;
+                  }
+                  if (memoInput && record.memo) {
+                    memoInput.value = record.memo;
+                    memoInput.disabled = true;
+                  }
+                }
               });
-              
-              calendar.appendChild(dayCard);
-              
-              // 次の日へ
-              currentDate.setDate(currentDate.getDate() + 1);
+            } catch (error) {
+              console.error('記録読み込みエラー:', error);
             }
           }
+          
+          // 前の日へ
+          function goToPreviousDay() {
+            const date = new Date(viewYear, viewMonth - 1, viewDay);
+            date.setDate(date.getDate() - 1);
+            
+            viewYear = date.getFullYear();
+            viewMonth = date.getMonth() + 1;
+            viewDay = date.getDate();
+            
+            updateDateDisplay();
+            generateDayCard();
+          }
+          
+          // 次の日へ
+          function goToNextDay() {
+            const date = new Date(viewYear, viewMonth - 1, viewDay);
+            date.setDate(date.getDate() + 1);
+            
+            viewYear = date.getFullYear();
+            viewMonth = date.getMonth() + 1;
+            viewDay = date.getDate();
+            
+            updateDateDisplay();
+            generateDayCard();
+          }
+          
+          // 今日に戻る
+          function goToToday() {
+            viewYear = currentYear;
+            viewMonth = currentMonth;
+            viewDay = currentDay;
+            
+            updateDateDisplay();
+            generateDayCard();
+          }
+          
+          // ボタンイベント設定
+          document.getElementById('prev-day-btn').addEventListener('click', goToPreviousDay);
+          document.getElementById('next-day-btn').addEventListener('click', goToNextDay);
+          document.getElementById('today-btn').addEventListener('click', goToToday);
           
           // チェックボックス変更処理
           async function handleCheckboxChange(year, month, day, category, checked) {
@@ -474,10 +565,13 @@ app.get('/', (c) => {
                 // 成功メッセージ
                 alert(\`\${month}月\${day}日の\${category}を記録しました！\\nパラメーターが上昇しました！\`);
                 
-                // チェックボックスを無効化
+                // チェックボックスとメモ入力を無効化
                 const checkbox = document.querySelector(\`input.category-checkbox[data-year="\${year}"][data-month="\${month}"][data-day="\${day}"][data-category="\${category}"]\`);
                 if (checkbox) {
                   checkbox.disabled = true;
+                }
+                if (memoInput) {
+                  memoInput.disabled = true;
                 }
               }
             } catch (error) {
@@ -488,7 +582,8 @@ app.get('/', (c) => {
           
           // 初期化
           loadParameters();
-          generateCalendar();
+          updateDateDisplay();
+          generateDayCard();
         </script>
     </body>
     </html>
