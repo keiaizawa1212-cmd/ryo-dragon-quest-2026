@@ -68,11 +68,7 @@ app.post('/api/records', async (c) => {
   const db = c.env.DB;
   const { year, month, day, category, memo } = await c.req.json();
   
-  // 学習記録を保存
-  await db.prepare('INSERT INTO learning_records (year, month, day, category, memo) VALUES (?, ?, ?, ?, ?)')
-    .bind(year, month, day, category, memo).run();
-  
-  // パラメーター更新
+  // パラメーター更新前の値を取得
   const params = await db.prepare('SELECT * FROM parameters ORDER BY id DESC LIMIT 1').first();
   
   let defense = params.defense as number;
@@ -81,45 +77,86 @@ app.post('/api/records', async (c) => {
   let hp = params.hp as number;
   let gold = params.gold as number;
   
+  // 更新前のレベルを計算
+  const oldDefenseLevel = Math.floor(defense / 5) + 1;
+  const oldAttackLevel = Math.floor(attack / 5) + 1;
+  const oldPowerLevel = Math.floor(power / 5) + 1;
+  const oldHpLevel = Math.floor(hp / 5) + 1;
+  
   // カテゴリーに応じてパラメーター増加（ランダム1〜3）
   const randomIncrease = () => Math.floor(Math.random() * 3) + 1;
   
+  let increaseAmount = 0;
+  
   switch (category) {
     case 'グノーブル国語':
-      defense += randomIncrease();
+      increaseAmount = randomIncrease();
+      defense += increaseAmount;
       break;
     case 'グノーブル算数':
-      attack += randomIncrease();
+      increaseAmount = randomIncrease();
+      attack += increaseAmount;
       break;
     case '基礎力完成テスト':
-      power += randomIncrease();
+      increaseAmount = randomIncrease();
+      power += increaseAmount;
       break;
     case '四谷大塚漢字':
-      hp += randomIncrease();
+      increaseAmount = randomIncrease();
+      hp += increaseAmount;
       break;
     case 'その他国語':
-      defense += randomIncrease();
+      increaseAmount = randomIncrease();
+      defense += increaseAmount;
       break;
     case 'その他算数':
-      attack += randomIncrease();
+      increaseAmount = randomIncrease();
+      attack += increaseAmount;
       break;
     case 'その他（スーパークエスト）':
-      const inc = randomIncrease();
-      defense += inc;
-      attack += inc;
-      power += inc;
-      hp += inc;
+      increaseAmount = randomIncrease();
+      defense += increaseAmount;
+      attack += increaseAmount;
+      power += increaseAmount;
+      hp += increaseAmount;
       break;
     case 'その他（自由記述）':
       gold += 10;
       break;
   }
   
+  // 更新後のレベルを計算
+  const newDefenseLevel = Math.floor(defense / 5) + 1;
+  const newAttackLevel = Math.floor(attack / 5) + 1;
+  const newPowerLevel = Math.floor(power / 5) + 1;
+  const newHpLevel = Math.floor(hp / 5) + 1;
+  
+  // レベルアップ判定
+  const leveledUp = 
+    newDefenseLevel > oldDefenseLevel ||
+    newAttackLevel > oldAttackLevel ||
+    newPowerLevel > oldPowerLevel ||
+    newHpLevel > oldHpLevel;
+  
+  // 学習記録を保存
+  const result = await db.prepare('INSERT INTO learning_records (year, month, day, category, memo) VALUES (?, ?, ?, ?, ?)')
+    .bind(year, month, day, category, memo).run();
+  
   // パラメーター更新
   await db.prepare('UPDATE parameters SET defense = ?, attack = ?, power = ?, hp = ?, gold = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ?')
     .bind(defense, attack, power, hp, gold, params.id).run();
   
-  return c.json({ success: true, defense, attack, power, hp, gold });
+  return c.json({ 
+    success: true, 
+    defense, 
+    attack, 
+    power, 
+    hp, 
+    gold,
+    increaseAmount,
+    leveledUp,
+    recordId: result.meta.last_row_id
+  });
 });
 
 // 学習記録取得API
@@ -141,14 +178,69 @@ app.get('/api/records', async (c) => {
   return c.json(result.results);
 });
 
-// 学習記録削除API
+// 学習記録削除API（チェック外し用）
 app.delete('/api/records/:id', async (c) => {
   const db = c.env.DB;
   const id = c.req.param('id');
   
-  await db.prepare('DELETE FROM learning_records WHERE id = ?').bind(id).run();
+  // 削除前に記録を取得してパラメーター減算
+  const record = await db.prepare('SELECT * FROM learning_records WHERE id = ?').bind(id).first();
   
-  return c.json({ success: true });
+  if (record) {
+    const params = await db.prepare('SELECT * FROM parameters ORDER BY id DESC LIMIT 1').first();
+    
+    let defense = params.defense as number;
+    let attack = params.attack as number;
+    let power = params.power as number;
+    let hp = params.hp as number;
+    let gold = params.gold as number;
+    
+    // 記録のメモから増加量を取得（ランダムなので平均2を減算）
+    const decreaseAmount = 2;
+    
+    // カテゴリーに応じてパラメーター減少
+    const category = record.category as string;
+    switch (category) {
+      case 'グノーブル国語':
+        defense = Math.max(5, defense - decreaseAmount);
+        break;
+      case 'グノーブル算数':
+        attack = Math.max(5, attack - decreaseAmount);
+        break;
+      case '基礎力完成テスト':
+        power = Math.max(5, power - decreaseAmount);
+        break;
+      case '四谷大塚漢字':
+        hp = Math.max(5, hp - decreaseAmount);
+        break;
+      case 'その他国語':
+        defense = Math.max(5, defense - decreaseAmount);
+        break;
+      case 'その他算数':
+        attack = Math.max(5, attack - decreaseAmount);
+        break;
+      case 'その他（スーパークエスト）':
+        defense = Math.max(5, defense - decreaseAmount);
+        attack = Math.max(5, attack - decreaseAmount);
+        power = Math.max(5, power - decreaseAmount);
+        hp = Math.max(5, hp - decreaseAmount);
+        break;
+      case 'その他（自由記述）':
+        gold = Math.max(0, gold - 10);
+        break;
+    }
+    
+    // パラメーター更新
+    await db.prepare('UPDATE parameters SET defense = ?, attack = ?, power = ?, hp = ?, gold = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ?')
+      .bind(defense, attack, power, hp, gold, params.id).run();
+    
+    // 記録削除
+    await db.prepare('DELETE FROM learning_records WHERE id = ?').bind(id).run();
+    
+    return c.json({ success: true, defense, attack, power, hp, gold });
+  }
+  
+  return c.json({ success: false, message: 'Record not found' });
 });
 
 // ルートページ
@@ -238,9 +330,68 @@ app.get('/', (c) => {
             outline: none;
             border-color: #fbbf24;
           }
+          
+          /* 紙吹雪アニメーション */
+          .confetti {
+            position: fixed;
+            width: 10px;
+            height: 10px;
+            background: #fbbf24;
+            position: fixed;
+            top: -10px;
+            z-index: 9999;
+            animation: confetti-fall 3s linear forwards;
+          }
+          
+          @keyframes confetti-fall {
+            to {
+              transform: translateY(100vh) rotate(360deg);
+              opacity: 0;
+            }
+          }
+          
+          /* レベルアップアニメーション */
+          .levelup-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.8);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 10000;
+            animation: fadeIn 0.5s ease-in-out;
+          }
+          
+          .levelup-text {
+            font-family: 'Press Start 2P', cursive;
+            font-size: 3rem;
+            color: #fbbf24;
+            text-shadow: 4px 4px 0px #000, -2px -2px 0px #fff;
+            animation: levelupPulse 1s ease-in-out infinite;
+          }
+          
+          @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+          }
+          
+          @keyframes levelupPulse {
+            0%, 100% { transform: scale(1); }
+            50% { transform: scale(1.2); }
+          }
         </style>
     </head>
     <body class="p-4 md:p-8">
+        <!-- レベルアップオーバーレイ -->
+        <div id="levelup-overlay" class="levelup-overlay" style="display: none;">
+          <div class="levelup-text">
+            LEVEL UP!
+          </div>
+        </div>
+        
         <div class="max-w-7xl mx-auto">
             <!-- タイトル -->
             <h1 class="dq-title text-2xl md:text-4xl text-center mb-8 py-4">
@@ -384,6 +535,86 @@ app.get('/', (c) => {
             }
           }
           
+          // 紙吹雪エフェクト
+          function showConfetti() {
+            const colors = ['#fbbf24', '#f59e0b', '#ef4444', '#10b981', '#3b82f6', '#8b5cf6'];
+            const confettiCount = 50;
+            
+            for (let i = 0; i < confettiCount; i++) {
+              setTimeout(() => {
+                const confetti = document.createElement('div');
+                confetti.className = 'confetti';
+                confetti.style.left = Math.random() * 100 + '%';
+                confetti.style.background = colors[Math.floor(Math.random() * colors.length)];
+                confetti.style.animationDelay = Math.random() * 0.5 + 's';
+                confetti.style.animationDuration = (Math.random() * 2 + 2) + 's';
+                document.body.appendChild(confetti);
+                
+                setTimeout(() => confetti.remove(), 3000);
+              }, i * 30);
+            }
+          }
+          
+          // レベルアップエフェクト＋効果音
+          function showLevelUpEffect() {
+            // オーバーレイ表示
+            const overlay = document.getElementById('levelup-overlay');
+            overlay.style.display = 'flex';
+            
+            // 大量の紙吹雪
+            const colors = ['#fbbf24', '#f59e0b', '#ef4444', '#10b981', '#3b82f6', '#8b5cf6'];
+            const confettiCount = 150;
+            
+            for (let i = 0; i < confettiCount; i++) {
+              setTimeout(() => {
+                const confetti = document.createElement('div');
+                confetti.className = 'confetti';
+                confetti.style.left = Math.random() * 100 + '%';
+                confetti.style.background = colors[Math.floor(Math.random() * colors.length)];
+                confetti.style.width = (Math.random() * 15 + 5) + 'px';
+                confetti.style.height = (Math.random() * 15 + 5) + 'px';
+                confetti.style.animationDelay = Math.random() * 0.3 + 's';
+                confetti.style.animationDuration = (Math.random() * 2 + 3) + 's';
+                document.body.appendChild(confetti);
+                
+                setTimeout(() => confetti.remove(), 5000);
+              }, i * 20);
+            }
+            
+            // レベルアップ効果音（Web Audio API）
+            playLevelUpSound();
+            
+            // 3秒後にオーバーレイを非表示
+            setTimeout(() => {
+              overlay.style.display = 'none';
+            }, 3000);
+          }
+          
+          // レベルアップ効果音
+          function playLevelUpSound() {
+            const audioContext = new (window.AudioContext || window.webkitAudioContext)();
+            const notes = [523.25, 587.33, 659.25, 783.99, 880.00]; // C, D, E, G, A
+            
+            notes.forEach((freq, i) => {
+              setTimeout(() => {
+                const oscillator = audioContext.createOscillator();
+                const gainNode = audioContext.createGain();
+                
+                oscillator.connect(gainNode);
+                gainNode.connect(audioContext.destination);
+                
+                oscillator.frequency.value = freq;
+                oscillator.type = 'square';
+                
+                gainNode.gain.setValueAtTime(0.3, audioContext.currentTime);
+                gainNode.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + 0.3);
+                
+                oscillator.start(audioContext.currentTime);
+                oscillator.stop(audioContext.currentTime + 0.3);
+              }, i * 100);
+            });
+          }
+          
           // 日付を更新
           function updateDateDisplay() {
             document.getElementById('current-date').textContent = 
@@ -488,11 +719,10 @@ app.get('/', (c) => {
                   
                   if (checkbox) {
                     checkbox.checked = true;
-                    checkbox.disabled = true;
+                    checkbox.dataset.recordId = record.id; // 記録IDを保存
                   }
                   if (memoInput && record.memo) {
                     memoInput.value = record.memo;
-                    memoInput.disabled = true;
                   }
                 }
               });
@@ -542,41 +772,69 @@ app.get('/', (c) => {
           document.getElementById('next-day-btn').addEventListener('click', goToNextDay);
           document.getElementById('today-btn').addEventListener('click', goToToday);
           
-          // チェックボックス変更処理
+          // チェックボックス変更処理（チェック＆チェック外し対応）
           async function handleCheckboxChange(year, month, day, category, checked) {
-            if (!checked) return;
-            
+            const checkbox = document.querySelector(\`input.category-checkbox[data-year="\${year}"][data-month="\${month}"][data-day="\${day}"][data-category="\${category}"]\`);
             const memoInput = document.querySelector(\`input.memo-input[data-year="\${year}"][data-month="\${month}"][data-day="\${day}"][data-category="\${category}"]\`);
-            const memo = memoInput ? memoInput.value : '';
             
-            try {
-              const response = await axios.post(API_BASE + '/api/records', {
-                year: year,
-                month: month,
-                day: day,
-                category: category,
-                memo: memo
-              });
+            if (checked) {
+              // チェックON → 記録追加
+              const memo = memoInput ? memoInput.value : '';
               
-              if (response.data.success) {
-                // パラメーター再読み込み
-                await loadParameters();
+              try {
+                const response = await axios.post(API_BASE + '/api/records', {
+                  year: year,
+                  month: month,
+                  day: day,
+                  category: category,
+                  memo: memo
+                });
                 
-                // 成功メッセージ
-                alert(\`\${month}月\${day}日の\${category}を記録しました！\\nパラメーターが上昇しました！\`);
-                
-                // チェックボックスとメモ入力を無効化
-                const checkbox = document.querySelector(\`input.category-checkbox[data-year="\${year}"][data-month="\${month}"][data-day="\${day}"][data-category="\${category}"]\`);
-                if (checkbox) {
-                  checkbox.disabled = true;
+                if (response.data.success) {
+                  // 記録IDを保存
+                  checkbox.dataset.recordId = response.data.recordId;
+                  
+                  // レベルアップ判定
+                  if (response.data.leveledUp) {
+                    showLevelUpEffect();
+                  } else {
+                    showConfetti();
+                  }
+                  
+                  // パラメーター再読み込み
+                  await loadParameters();
+                  
+                  // 成功メッセージ（アラートなし）
+                  console.log(\`\${month}月\${day}日の\${category}を記録しました！パラメーター+\${response.data.increaseAmount || 10}\`);
                 }
-                if (memoInput) {
-                  memoInput.disabled = true;
+              } catch (error) {
+                console.error('記録エラー:', error);
+                checkbox.checked = false;
+                alert('記録に失敗しました');
+              }
+            } else {
+              // チェックOFF → 記録削除
+              const recordId = checkbox.dataset.recordId;
+              
+              if (recordId) {
+                try {
+                  const response = await axios.delete(API_BASE + '/api/records/' + recordId);
+                  
+                  if (response.data.success) {
+                    // 記録IDを削除
+                    delete checkbox.dataset.recordId;
+                    
+                    // パラメーター再読み込み
+                    await loadParameters();
+                    
+                    console.log(\`\${month}月\${day}日の\${category}の記録を削除しました\`);
+                  }
+                } catch (error) {
+                  console.error('削除エラー:', error);
+                  checkbox.checked = true;
+                  alert('削除に失敗しました');
                 }
               }
-            } catch (error) {
-              console.error('記録エラー:', error);
-              alert('記録に失敗しました');
             }
           }
           
