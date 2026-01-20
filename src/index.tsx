@@ -10,13 +10,28 @@ const app = new Hono<{ Bindings: Bindings }>()
 // CORS設定
 app.use('/api/*', cors())
 
-// ボスモンスターデータ
+// ボスモンスターデータ（レベル5刻みで20体）
 const BOSS_MONSTERS = [
-  { threshold: 10, name: '暗記魔人ザンキング', description: '暗記を嫌う魔物' },
-  { threshold: 20, name: '計算魔王カルクロス', description: '計算問題を乱す魔王' },
-  { threshold: 30, name: '読解竜ドクカイザー', description: '読解力を奪う竜' },
-  { threshold: 40, name: '応用魔神オーヨード', description: '応用問題の支配者' },
-  { threshold: 50, name: '大魔王ジュケンデビル', description: '受験を統べる最強の魔王' }
+  { level: 5, name: '暗記スライム', description: '暗記の基礎を学ぶ最初の敵' },
+  { level: 10, name: '計算ゴブリン', description: '四則演算を操る小鬼' },
+  { level: 15, name: '漢字オーク', description: '漢字の読み書きを妨げる敵' },
+  { level: 20, name: '文章トロール', description: '文章問題を複雑にする巨人' },
+  { level: 25, name: '暗記魔人ザンキング', description: '暗記を嫌う中級魔物' },
+  { level: 30, name: '計算魔王カルクロス', description: '計算問題を乱す魔王' },
+  { level: 35, name: '読解竜ドクカイザー', description: '読解力を奪う竜' },
+  { level: 40, name: '応用魔神オーヨード', description: '応用問題の支配者' },
+  { level: 45, name: '図形騎士ズケイト', description: '図形問題の守護者' },
+  { level: 50, name: '文法将軍ブンポウ', description: '文法の鉄則を操る将軍' },
+  { level: 55, name: '速算妖怪ソクサンマ', description: '速算力を試す妖怪' },
+  { level: 60, name: '記述魔導士キジュツ', description: '記述問題の魔術師' },
+  { level: 65, name: '論理魔神ロンリード', description: '論理的思考を問う魔神' },
+  { level: 70, name: '複合竜コンボドラ', description: '複合問題を繰り出す竜' },
+  { level: 75, name: '時間支配者タイムロード', description: '時間配分を狂わせる支配者' },
+  { level: 80, name: '難問帝王ナンモンテイ', description: '難問を生み出す帝王' },
+  { level: 85, name: '完璧騎士パーフェクト', description: '完璧な解答を求める騎士' },
+  { level: 90, name: '試験神エグザム', description: '試験そのものを司る神' },
+  { level: 95, name: '合格竜パスドラゴン', description: '合格への最後の壁' },
+  { level: 100, name: '大魔王ジュケンデビル', description: '受験を統べる最強の魔王' }
 ];
 
 // パラメーター取得API
@@ -43,13 +58,17 @@ app.get('/api/parameters', async (c) => {
   const powerLevel = Math.floor(power / 5) + 1;
   const hpLevel = Math.floor(hp / 5) + 1;
   
-  // ボス出現判定
-  const minParam = Math.min(defense, attack, power, hp);
+  // ボス出現判定（全レベルが一致した時のみ）
+  const minLevel = Math.min(defenseLevel, attackLevel, powerLevel, hpLevel);
   let currentBoss = null;
   
-  for (const boss of BOSS_MONSTERS) {
-    if (minParam >= boss.threshold) {
-      currentBoss = boss;
+  // 全てのレベルが同じ場合のみボス出現
+  if (defenseLevel === attackLevel && attackLevel === powerLevel && powerLevel === hpLevel) {
+    for (const boss of BOSS_MONSTERS) {
+      if (minLevel === boss.level) {
+        currentBoss = boss;
+        break;
+      }
     }
   }
   
