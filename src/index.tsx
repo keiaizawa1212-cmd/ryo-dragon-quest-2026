@@ -727,42 +727,42 @@ app.get('/', (c) => {
             
             <!-- パラメーター表示 -->
             <div class="dq-box rounded-lg p-6 mb-8">
-                <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
                     <div class="text-yellow-400 font-bold">
-                        <div class="flex justify-between items-center mb-2">
-                            <span><i class="fas fa-shield-alt"></i> 防御力（国語）Lv.<span id="defense-level">1</span></span>
-                            <span class="text-2xl" id="defense-value">5</span>
+                        <div class="flex justify-between items-center mb-3">
+                            <span class="text-xl md:text-2xl"><i class="fas fa-shield-alt mr-2"></i> 防御力（国語） <span class="text-2xl md:text-3xl">Lv.<span id="defense-level">1</span></span></span>
+                            <span class="text-4xl md:text-5xl font-black" id="defense-value">5</span>
                         </div>
                         <div class="param-bar" id="defense-bar" style="width: 5%"></div>
                     </div>
                     
                     <div class="text-red-400 font-bold">
-                        <div class="flex justify-between items-center mb-2">
-                            <span><i class="fas fa-fist-raised"></i> 攻撃力（算数）Lv.<span id="attack-level">1</span></span>
-                            <span class="text-2xl" id="attack-value">5</span>
+                        <div class="flex justify-between items-center mb-3">
+                            <span class="text-xl md:text-2xl"><i class="fas fa-fist-raised mr-2"></i> 攻撃力（算数） <span class="text-2xl md:text-3xl">Lv.<span id="attack-level">1</span></span></span>
+                            <span class="text-4xl md:text-5xl font-black" id="attack-value">5</span>
                         </div>
                         <div class="param-bar" id="attack-bar" style="width: 5%"></div>
                     </div>
                     
                     <div class="text-blue-400 font-bold">
-                        <div class="flex justify-between items-center mb-2">
-                            <span><i class="fas fa-bolt"></i> 力（基礎力）Lv.<span id="power-level">1</span></span>
-                            <span class="text-2xl" id="power-value">5</span>
+                        <div class="flex justify-between items-center mb-3">
+                            <span class="text-xl md:text-2xl"><i class="fas fa-bolt mr-2"></i> 力（基礎力） <span class="text-2xl md:text-3xl">Lv.<span id="power-level">1</span></span></span>
+                            <span class="text-4xl md:text-5xl font-black" id="power-value">5</span>
                         </div>
                         <div class="param-bar" id="power-bar" style="width: 5%"></div>
                     </div>
                     
                     <div class="text-green-400 font-bold">
-                        <div class="flex justify-between items-center mb-2">
-                            <span><i class="fas fa-heart"></i> 体力（漢字）Lv.<span id="hp-level">1</span></span>
-                            <span class="text-2xl" id="hp-value">5</span>
+                        <div class="flex justify-between items-center mb-3">
+                            <span class="text-xl md:text-2xl"><i class="fas fa-heart mr-2"></i> 体力（漢字） <span class="text-2xl md:text-3xl">Lv.<span id="hp-level">1</span></span></span>
+                            <span class="text-4xl md:text-5xl font-black" id="hp-value">5</span>
                         </div>
                         <div class="param-bar" id="hp-bar" style="width: 5%"></div>
                     </div>
                 </div>
                 
-                <div class="text-yellow-300 font-bold text-xl text-center mt-4">
-                    <i class="fas fa-coins"></i> ゴールド: <span id="gold-value">0</span>G
+                <div class="text-yellow-300 font-bold text-2xl md:text-3xl text-center mt-6">
+                    <i class="fas fa-coins mr-2"></i> ゴールド: <span id="gold-value" class="text-3xl md:text-4xl">0</span>G
                 </div>
             </div>
             
@@ -833,26 +833,26 @@ app.get('/', (c) => {
           let viewMonth = currentMonth;
           let viewDay = currentDay;
           
-          // ボスモンスターデータ（フロントエンド用）
+          // ボスモンスターデータ（フロントエンド用 - 現代風アイコン）
           const BOSS_MONSTERS = [
-            { level: 5, name: '暗記スライム', icon: '🟢', description: '暗記の基礎を学ぶ最初の敵' },
-            { level: 10, name: '計算ゴブリン', icon: '👺', description: '四則演算を操る小鬼' },
-            { level: 15, name: '漢字オーク', icon: '👹', description: '漢字の読み書きを妨げる敵' },
-            { level: 20, name: '文章トロール', icon: '🧟', description: '文章問題を複雑にする巨人' },
-            { level: 25, name: '暗記魔人ザンキング', icon: '👿', description: '暗記を嫌う中級魔物' },
-            { level: 30, name: '計算魔王カルクロス', icon: '😈', description: '計算問題を乱す魔王' },
-            { level: 35, name: '読解竜ドクカイザー', icon: '🐉', description: '読解力を奪う竜' },
-            { level: 40, name: '応用魔神オーヨード', icon: '👻', description: '応用問題の支配者' },
+            { level: 5, name: '暗記スライム', icon: '🟩', description: '暗記の基礎を学ぶ最初の敵' },
+            { level: 10, name: '計算ゴブリン', icon: '🧌', description: '四則演算を操る小鬼' },
+            { level: 15, name: '漢字オーク', icon: '🦍', description: '漢字の読み書きを妨げる敵' },
+            { level: 20, name: '文章トロール', icon: '🧟‍♂️', description: '文章問題を複雑にする巨人' },
+            { level: 25, name: '暗記魔人ザンキング', icon: '😈', description: '暗記を嫌う中級魔物' },
+            { level: 30, name: '計算魔王カルクロス', icon: '👹', description: '計算問題を乱す魔王' },
+            { level: 35, name: '読解竜ドクカイザー', icon: '🐲', description: '読解力を奪う竜' },
+            { level: 40, name: '応用魔神オーヨード', icon: '👺', description: '応用問題の支配者' },
             { level: 45, name: '図形騎士ズケイト', icon: '🛡️', description: '図形問題の守護者' },
             { level: 50, name: '文法将軍ブンポウ', icon: '⚔️', description: '文法の鉄則を操る将軍' },
-            { level: 55, name: '速算妖怪ソクサンマ', icon: '👾', description: '速算力を試す妖怪' },
-            { level: 60, name: '記述魔導士キジュツ', icon: '🧙', description: '記述問題の魔術師' },
-            { level: 65, name: '論理魔神ロンリード', icon: '🎭', description: '論理的思考を問う魔神' },
-            { level: 70, name: '複合竜コンボドラ', icon: '🐲', description: '複合問題を繰り出す竜' },
-            { level: 75, name: '時間支配者タイムロード', icon: '⏰', description: '時間配分を狂わせる支配者' },
+            { level: 55, name: '速算妖怪ソクサンマ', icon: '👻', description: '速算力を試す妖怪' },
+            { level: 60, name: '記述魔導士キジュツ', icon: '🧙‍♂️', description: '記述問題の魔術師' },
+            { level: 65, name: '論理魔神ロンリード', icon: '🧠', description: '論理的思考を問う魔神' },
+            { level: 70, name: '複合竜コンボドラ', icon: '🐉', description: '複合問題を繰り出す竜' },
+            { level: 75, name: '時間支配者タイムロード', icon: '⏱️', description: '時間配分を狂わせる支配者' },
             { level: 80, name: '難問帝王ナンモンテイ', icon: '👑', description: '難問を生み出す帝王' },
             { level: 85, name: '完璧騎士パーフェクト', icon: '🏆', description: '完璧な解答を求める騎士' },
-            { level: 90, name: '試験神エグザム', icon: '📝', description: '試験そのものを司る神' },
+            { level: 90, name: '試験神エグザム', icon: '📜', description: '試験そのものを司る神' },
             { level: 95, name: '合格竜パスドラゴン', icon: '🎓', description: '合格への最後の壁' },
             { level: 100, name: '大魔王ジュケンデビル', icon: '💀', description: '受験を統べる最強の魔王' }
           ];
