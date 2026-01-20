@@ -72,13 +72,18 @@ app.get('/api/parameters', async (c) => {
     }
   }
   
+  // ボス討伐記録を取得
+  const defeatedBosses = await db.prepare('SELECT boss_level FROM boss_defeats ORDER BY boss_level').all();
+  const defeatedLevels = defeatedBosses.results.map(row => row.boss_level);
+  
   return c.json({
     ...result,
     defenseLevel,
     attackLevel,
     powerLevel,
     hpLevel,
-    currentBoss
+    currentBoss,
+    defeatedBosses: defeatedLevels
   });
 });
 
@@ -195,6 +200,29 @@ app.get('/api/records', async (c) => {
   
   const result = await db.prepare(query).bind(...bindings).all();
   return c.json(result.results);
+});
+
+// ボス討伐記録API
+app.post('/api/boss-defeat', async (c) => {
+  const db = c.env.DB;
+  const { bossLevel } = await c.req.json();
+  
+  // 既に討伐済みかチェック
+  const existing = await db.prepare('SELECT * FROM boss_defeats WHERE boss_level = ?').bind(bossLevel).first();
+  
+  if (!existing) {
+    // 討伐記録を追加
+    await db.prepare('INSERT INTO boss_defeats (boss_level) VALUES (?)').bind(bossLevel).run();
+  }
+  
+  return c.json({ success: true, bossLevel });
+});
+
+// ボス討伐記録取得API
+app.get('/api/boss-defeats', async (c) => {
+  const db = c.env.DB;
+  const result = await db.prepare('SELECT boss_level FROM boss_defeats ORDER BY boss_level').all();
+  return c.json(result.results.map(row => row.boss_level));
 });
 
 // 学習記録削除API（チェック外し用）
@@ -350,6 +378,75 @@ app.get('/', (c) => {
             border-color: #fbbf24;
           }
           
+          /* ボス図鑑カード */
+          .boss-card {
+            background: rgba(31, 41, 55, 0.9);
+            border: 2px solid #4b5563;
+            border-radius: 8px;
+            padding: 12px;
+            text-align: center;
+            transition: all 0.3s ease;
+            position: relative;
+            cursor: pointer;
+          }
+          
+          .boss-card:hover {
+            border-color: #fbbf24;
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(251, 191, 36, 0.3);
+          }
+          
+          .boss-card.defeated {
+            background: rgba(34, 197, 94, 0.2);
+            border-color: #22c55e;
+          }
+          
+          .boss-card.current {
+            background: rgba(239, 68, 68, 0.3);
+            border-color: #ef4444;
+            animation: bossGlow 1s ease-in-out infinite;
+          }
+          
+          @keyframes bossGlow {
+            0%, 100% { box-shadow: 0 0 10px rgba(239, 68, 68, 0.5); }
+            50% { box-shadow: 0 0 20px rgba(239, 68, 68, 0.8); }
+          }
+          
+          .boss-icon {
+            font-size: 2rem;
+            margin-bottom: 8px;
+          }
+          
+          .boss-level {
+            font-size: 0.875rem;
+            font-weight: bold;
+            color: #fbbf24;
+            margin-bottom: 4px;
+          }
+          
+          .boss-name {
+            font-size: 0.75rem;
+            color: #e5e7eb;
+            line-height: 1.2;
+          }
+          
+          .defeated-mark {
+            position: absolute;
+            top: -8px;
+            right: -8px;
+            background: #22c55e;
+            color: white;
+            border-radius: 50%;
+            width: 32px;
+            height: 32px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.2rem;
+            border: 2px solid #fff;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+          }
+          
           /* 紙吹雪アニメーション */
           .confetti {
             position: fixed;
@@ -465,6 +562,19 @@ app.get('/', (c) => {
                     <h2 class="text-3xl font-bold text-red-500 mb-2" id="boss-name"></h2>
                     <p class="text-yellow-300 text-lg" id="boss-description"></p>
                     <p class="text-white mt-4 text-xl">があらわれた！</p>
+                    <button id="defeat-boss-btn" class="mt-4 bg-red-600 hover:bg-red-700 text-white font-bold py-3 px-8 rounded-lg text-xl transition-all transform hover:scale-105">
+                        <i class="fas fa-sword mr-2"></i>討伐する！
+                    </button>
+                </div>
+            </div>
+            
+            <!-- ボス図鑑 -->
+            <div class="dq-box rounded-lg p-6 mb-8">
+                <h2 class="text-2xl font-bold text-yellow-400 mb-4 text-center">
+                    <i class="fas fa-book-open mr-2"></i>ボスモンスター図鑑
+                </h2>
+                <div class="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-5 gap-3" id="boss-list">
+                    <!-- JavaScriptで動的に生成 -->
                 </div>
             </div>
             
@@ -512,6 +622,30 @@ app.get('/', (c) => {
           let viewMonth = currentMonth;
           let viewDay = currentDay;
           
+          // ボスモンスターデータ（フロントエンド用）
+          const BOSS_MONSTERS = [
+            { level: 5, name: '暗記スライム', icon: '🟢', description: '暗記の基礎を学ぶ最初の敵' },
+            { level: 10, name: '計算ゴブリン', icon: '👺', description: '四則演算を操る小鬼' },
+            { level: 15, name: '漢字オーク', icon: '👹', description: '漢字の読み書きを妨げる敵' },
+            { level: 20, name: '文章トロール', icon: '🧟', description: '文章問題を複雑にする巨人' },
+            { level: 25, name: '暗記魔人ザンキング', icon: '👿', description: '暗記を嫌う中級魔物' },
+            { level: 30, name: '計算魔王カルクロス', icon: '😈', description: '計算問題を乱す魔王' },
+            { level: 35, name: '読解竜ドクカイザー', icon: '🐉', description: '読解力を奪う竜' },
+            { level: 40, name: '応用魔神オーヨード', icon: '👻', description: '応用問題の支配者' },
+            { level: 45, name: '図形騎士ズケイト', icon: '🛡️', description: '図形問題の守護者' },
+            { level: 50, name: '文法将軍ブンポウ', icon: '⚔️', description: '文法の鉄則を操る将軍' },
+            { level: 55, name: '速算妖怪ソクサンマ', icon: '👾', description: '速算力を試す妖怪' },
+            { level: 60, name: '記述魔導士キジュツ', icon: '🧙', description: '記述問題の魔術師' },
+            { level: 65, name: '論理魔神ロンリード', icon: '🎭', description: '論理的思考を問う魔神' },
+            { level: 70, name: '複合竜コンボドラ', icon: '🐲', description: '複合問題を繰り出す竜' },
+            { level: 75, name: '時間支配者タイムロード', icon: '⏰', description: '時間配分を狂わせる支配者' },
+            { level: 80, name: '難問帝王ナンモンテイ', icon: '👑', description: '難問を生み出す帝王' },
+            { level: 85, name: '完璧騎士パーフェクト', icon: '🏆', description: '完璧な解答を求める騎士' },
+            { level: 90, name: '試験神エグザム', icon: '📝', description: '試験そのものを司る神' },
+            { level: 95, name: '合格竜パスドラゴン', icon: '🎓', description: '合格への最後の壁' },
+            { level: 100, name: '大魔王ジュケンデビル', icon: '💀', description: '受験を統べる最強の魔王' }
+          ];
+          
           // パラメーター読み込み
           async function loadParameters() {
             try {
@@ -552,7 +686,94 @@ app.get('/', (c) => {
             } else {
               document.getElementById('boss-area').classList.add('hidden');
             }
+            
+            // ボス図鑑を更新
+            generateBossList();
           }
+          
+          // ボス図鑑を生成
+          function generateBossList() {
+            const bossList = document.getElementById('boss-list');
+            bossList.innerHTML = '';
+            
+            const defeatedBosses = currentParams ? currentParams.defeatedBosses || [] : [];
+            const currentBossLevel = currentParams && currentParams.currentBoss ? currentParams.currentBoss.level : null;
+            
+            BOSS_MONSTERS.forEach(boss => {
+              const bossCard = document.createElement('div');
+              bossCard.className = 'boss-card';
+              
+              // 討伐済みかチェック
+              const isDefeated = defeatedBosses.includes(boss.level);
+              if (isDefeated) {
+                bossCard.classList.add('defeated');
+              }
+              
+              // 現在出現中のボス
+              if (boss.level === currentBossLevel) {
+                bossCard.classList.add('current');
+              }
+              
+              // ボスアイコン
+              const icon = document.createElement('div');
+              icon.className = 'boss-icon';
+              icon.textContent = boss.icon;
+              bossCard.appendChild(icon);
+              
+              // レベル表示
+              const level = document.createElement('div');
+              level.className = 'boss-level';
+              level.textContent = 'Lv.' + boss.level;
+              bossCard.appendChild(level);
+              
+              // ボス名
+              const name = document.createElement('div');
+              name.className = 'boss-name';
+              name.textContent = boss.name;
+              bossCard.appendChild(name);
+              
+              // 討伐マーク
+              if (isDefeated) {
+                const mark = document.createElement('div');
+                mark.className = 'defeated-mark';
+                mark.innerHTML = '<i class="fas fa-check"></i>';
+                bossCard.appendChild(mark);
+              }
+              
+              bossList.appendChild(bossCard);
+            });
+          }
+          
+          // ボス討伐処理
+          async function defeatBoss() {
+            if (!currentParams || !currentParams.currentBoss) return;
+            
+            const bossLevel = currentParams.currentBoss.level;
+            
+            try {
+              const response = await axios.post(API_BASE + '/api/boss-defeat', {
+                bossLevel: bossLevel
+              });
+              
+              if (response.data.success) {
+                // パラメーター再読み込み
+                await loadParameters();
+                
+                // ボスエリアを非表示
+                document.getElementById('boss-area').classList.add('hidden');
+                
+                // 盛大なエフェクト
+                showLevelUpEffect();
+                
+                alert('🎉 おめでとう！' + currentParams.currentBoss.name + 'を討伐しました！');
+              }
+            } catch (error) {
+              console.error('討伐記録エラー:', error);
+            }
+          }
+          
+          // 討伐ボタンのイベントリスナー
+          document.getElementById('defeat-boss-btn').addEventListener('click', defeatBoss);
           
           // 紙吹雪エフェクト
           function showConfetti() {
