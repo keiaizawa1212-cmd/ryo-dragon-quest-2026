@@ -840,7 +840,7 @@ app.get('/', (c) => {
             { level: 4, name: '漢字オーク', icon: '🦍', description: '漢字の読み書きを妨げる敵' },
             { level: 5, name: '文章トロール', icon: '🧟‍♂️', description: '文章問題を複雑にする巨人' },
             { level: 6, name: '暗記魔人ザンキング', icon: '😈', description: '暗記を嫌う中級魔物' },
-            { level: 7, name: '計算魔王カルクロス', icon: '👿', description: '計算問題を乱す魔王' },
+            { level: 7, name: '計算魔王カルクロス', icon: '🔢', description: '計算問題を乱す魔王' },
             { level: 8, name: '読解竜ドクカイザー', icon: '🐲', description: '読解力を奪う竜' },
             { level: 9, name: '応用魔神オーヨード', icon: '👺', description: '応用問題の支配者' },
             { level: 10, name: '図形騎士ズケイト', icon: '🛡️', description: '図形問題の守護者' },
