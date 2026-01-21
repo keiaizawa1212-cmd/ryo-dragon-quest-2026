@@ -290,6 +290,19 @@ app.delete('/api/records/:id', async (c) => {
   return c.json({ success: false, message: 'Record not found' });
 });
 
+// メモ更新API
+app.put('/api/records/:id/memo', async (c) => {
+  const db = c.env.DB;
+  const id = c.req.param('id');
+  const { memo } = await c.req.json();
+  
+  // メモを更新
+  await db.prepare('UPDATE learning_records SET memo = ? WHERE id = ?')
+    .bind(memo, id).run();
+  
+  return c.json({ success: true, memo });
+});
+
 // ルートページ
 app.get('/', (c) => {
   return c.html(`
@@ -1146,6 +1159,15 @@ app.get('/', (c) => {
               memoInput.dataset.day = viewDay;
               memoInput.dataset.category = category;
               
+              // メモ自動保存機能：入力が止まって1秒後に保存
+              let memoSaveTimer;
+              memoInput.addEventListener('input', () => {
+                clearTimeout(memoSaveTimer);
+                memoSaveTimer = setTimeout(async () => {
+                  await saveMemo(viewYear, viewMonth, viewDay, category, memoInput.value);
+                }, 1000); // 1秒後に保存
+              });
+              
               categoryDiv.appendChild(labelDiv);
               categoryDiv.appendChild(memoInput);
               dayCard.appendChild(categoryDiv);
@@ -1179,6 +1201,40 @@ app.get('/', (c) => {
               });
             } catch (error) {
               console.error('記録読み込みエラー:', error);
+            }
+          }
+          
+          // メモを保存する関数
+          async function saveMemo(year, month, day, category, memo) {
+            const checkbox = document.querySelector(\`input.category-checkbox[data-year="\${year}"][data-month="\${month}"][data-day="\${day}"][data-category="\${category}"]\`);
+            const recordId = checkbox ? checkbox.dataset.recordId : null;
+            
+            try {
+              if (recordId) {
+                // 既存の記録がある場合：メモを更新
+                await axios.put(API_BASE + '/api/records/' + recordId + '/memo', {
+                  memo: memo
+                });
+                console.log(\`\${month}月\${day}日の\${category}のメモを保存しました\`);
+              } else if (memo.trim() !== '') {
+                // 記録がないがメモがある場合：新規記録を作成（チェックなし）
+                const response = await axios.post(API_BASE + '/api/records', {
+                  year: year,
+                  month: month,
+                  day: day,
+                  category: category,
+                  memo: memo
+                });
+                
+                if (response.data.success && checkbox) {
+                  checkbox.dataset.recordId = response.data.recordId;
+                  checkbox.checked = true;
+                  await loadParameters();
+                  console.log(\`\${month}月\${day}日の\${category}のメモを保存し、記録を追加しました\`);
+                }
+              }
+            } catch (error) {
+              console.error('メモ保存エラー:', error);
             }
           }
           
