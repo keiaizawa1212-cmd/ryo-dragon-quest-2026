@@ -58,23 +58,23 @@ app.get('/api/parameters', async (c) => {
   const powerLevel = Math.floor((power - 1) / 5) + 1;
   const hpLevel = Math.floor((hp - 1) / 5) + 1;
   
-  // ボス出現判定（全レベルが一致した時のみ）
+  // ボス出現判定（全パラメーターが指定レベル以上の時に出現）
   const minLevel = Math.min(defenseLevel, attackLevel, powerLevel, hpLevel);
   let currentBoss = null;
   
-  // 全てのレベルが同じ場合のみボス出現
-  if (defenseLevel === attackLevel && attackLevel === powerLevel && powerLevel === hpLevel) {
-    for (const boss of BOSS_MONSTERS) {
-      if (minLevel === boss.level) {
-        currentBoss = boss;
-        break;
-      }
+  // ボス討伐記録を取得して、未討伐の最高レベルのボスを表示
+  const defeatedBossesResult = await db.prepare('SELECT boss_level FROM boss_defeats ORDER BY boss_level').all();
+  const defeatedLevels = defeatedBossesResult.results.map(row => row.boss_level as number);
+  
+  // 全パラメーターが達成しているレベルに対応する、まだ倒していない最高レベルのボスを表示
+  for (let i = BOSS_MONSTERS.length - 1; i >= 0; i--) {
+    const boss = BOSS_MONSTERS[i];
+    // 全パラメーターがボスレベル以上で、まだ倒していない場合
+    if (minLevel >= boss.level && !defeatedLevels.includes(boss.level)) {
+      currentBoss = boss;
+      break;
     }
   }
-  
-  // ボス討伐記録を取得
-  const defeatedBosses = await db.prepare('SELECT boss_level FROM boss_defeats ORDER BY boss_level').all();
-  const defeatedLevels = defeatedBosses.results.map(row => row.boss_level);
   
   return c.json({
     ...result,
